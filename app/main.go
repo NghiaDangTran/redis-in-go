@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -22,7 +23,6 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("Successed to bind to port 6379")
-	total := 0
 	for {
 
 		conn, err := l.Accept()
@@ -30,9 +30,36 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		total += 1
 
-		conn.Write([]byte("+PONG\r\n"))
-		fmt.Println("Total connection " + fmt.Sprintf("%d", total))
+		HandelConnection(conn)
 	}
+}
+
+func HandelConnection(con net.Conn) {
+	defer con.Close()
+	b := make([]byte, 9999)
+
+	for {
+		numBytes, err := con.Read(b)
+
+		if err != nil {
+			fmt.Println("Error reading:", err)
+			return
+		}
+
+		cmd := strings.Split(string(b[:numBytes]), "\r\n")[2]
+
+		fmt.Printf("User Command: \"%s\" \n", cmd)
+
+		switch strings.ToUpper(cmd) {
+		case "PING":
+			con.Write([]byte("+PONG\r\n"))
+		case "QUIT":
+			return
+		default:
+			con.Write([]byte("-ERR unknown command\r\n"))
+		}
+
+	}
+
 }
