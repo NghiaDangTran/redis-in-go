@@ -106,16 +106,15 @@ func SET(k string, v string, con net.Conn, agr ...string) {
 	MEM[k] = v
 	con.Write([]byte("+OK\r\n"))
 
-	if strings.ToUpper(agr[8]) == "PX" {
+	if len(agr) >= 8 && strings.ToUpper(agr[8]) == "PX" {
+		ms, err := strconv.Atoi(agr[10])
+		if err != nil {
+			fmt.Println("Invalid PX value:", agr[1])
+			return
+		}
 		go func() {
-			seconds, err := strconv.Atoi(agr[10])
-			if err == nil {
-				<-time.After(time.Duration(seconds) * time.Millisecond)
-				delete(MEM, k)
-
-			} else {
-				fmt.Println("Invalid timeout value:", agr[10])
-			}
+			<-time.After(time.Duration(ms-1) * time.Millisecond)
+			delete(MEM, k)
 		}()
 	}
 
