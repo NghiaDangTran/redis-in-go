@@ -10,6 +10,9 @@ import (
 var _ = net.Listen
 var _ = os.Exit
 
+// avalaibel around 10000 key
+var MEM = make(map[string]string, 10000)
+
 func main() {
 	fmt.Println("Logs from your program will appear here!")
 
@@ -53,7 +56,7 @@ func HandelConnection(con net.Conn) {
 			con.Write([]byte("+PONG\r\n"))
 		case "ECHO":
 			if len(cmd) < 5 {
-				con.Write([]byte("-ERR Not enough arguments \r\n"))
+				con.Write([]byte("-ERR Not enough arguments for ECHO command \r\n"))
 			} else {
 				message := cmd[4]
 				con.Write([]byte(fmt.Sprintf("+%s\r\n", message)))
@@ -62,10 +65,52 @@ func HandelConnection(con net.Conn) {
 
 		case "QUIT":
 			return
+		case "SET":
+			// sample "[*3 $3 set $4 test $2 ok ]"
+			if len(cmd) < 6 {
+				con.Write([]byte("-ERR Not enough arguments for SET command \r\n"))
+			} else {
+				key := cmd[4]
+				value := cmd[6]
+				SET(key, value, con)
+			}
+
+		case "GET":
+			// sample: "[*2 $3 get $2 hi ]"
+			if len(cmd) < 4 {
+				con.Write([]byte("-ERR Not enough arguments for GET command \r\n"))
+			} else {
+				key := cmd[4]
+				GET(key, con)
+			}
+
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
 
 	}
+
+}
+
+func SET(k string, v string, con net.Conn) {
+	// key already exist in memory
+	// _, ok := MEM[k]
+	// if ok {
+	// 	con.Write([]byte("-ERR This Key Already Existed\r\n"))
+	// 	return
+	// }
+	MEM[k] = v
+	con.Write([]byte("+OK\r\n"))
+
+}
+
+func GET(k string, con net.Conn) {
+	val, ok := MEM[k]
+	if !ok {
+		con.Write([]byte("-1\r\n"))
+		return
+	}
+	msg := fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)
+	con.Write([]byte(msg))
 
 }
