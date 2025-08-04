@@ -44,13 +44,22 @@ func HandelConnection(con net.Conn) {
 			return
 		}
 
-		cmd := strings.Split(string(b[:numBytes]), "\r\n")[2]
+		cmd := strings.Split(string(b[:numBytes]), "\r\n")
 
 		fmt.Printf("User Command: \"%s\" \n", cmd)
 
-		switch strings.ToUpper(cmd) {
+		switch strings.ToUpper(cmd[2]) {
 		case "PING":
 			con.Write([]byte("+PONG\r\n"))
+		case "ECHO":
+			if len(cmd) < 5 {
+				con.Write([]byte("-ERR Not enough arguments \r\n"))
+			} else {
+				message := cmd[4]
+				con.Write([]byte(fmt.Sprintf("+%s\r\n", message)))
+
+			}
+
 		case "QUIT":
 			return
 		default:
