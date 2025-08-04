@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 var _ = net.Listen
@@ -72,7 +74,9 @@ func HandelConnection(con net.Conn) {
 			} else {
 				key := cmd[4]
 				value := cmd[6]
-				SET(key, value, con)
+				// with expiry ags  "[*5 $3 SET $3 foo $3 bar $2 px $3 100 ]"
+				SET(key, value, con, cmd...)
+
 			}
 
 		case "GET":
@@ -92,7 +96,7 @@ func HandelConnection(con net.Conn) {
 
 }
 
-func SET(k string, v string, con net.Conn) {
+func SET(k string, v string, con net.Conn, agr ...string) {
 	// key already exist in memory
 	// _, ok := MEM[k]
 	// if ok {
@@ -101,6 +105,19 @@ func SET(k string, v string, con net.Conn) {
 	// }
 	MEM[k] = v
 	con.Write([]byte("+OK\r\n"))
+
+	if strings.ToUpper(agr[8]) == "PX" {
+		go func() {
+			seconds, err := strconv.Atoi(agr[10])
+			if err == nil {
+				<-time.After(time.Duration(seconds) * time.Millisecond)
+				delete(MEM, k)
+
+			} else {
+				fmt.Println("Invalid timeout value:", agr[10])
+			}
+		}()
+	}
 
 }
 
