@@ -113,7 +113,7 @@ func SET(k string, v string, con net.Conn, agr ...string) {
 			return
 		}
 		go func() {
-			<-time.After(time.Duration(ms-1) * time.Millisecond)
+			<-time.After(time.Duration(ms) * time.Millisecond)
 			delete(MEM, k)
 		}()
 	}
@@ -123,7 +123,7 @@ func SET(k string, v string, con net.Conn, agr ...string) {
 func GET(k string, con net.Conn) {
 	val, ok := MEM[k]
 	if !ok {
-		con.Write([]byte("-1\r\n"))
+		con.Write([]byte("$-1\r\n"))
 		return
 	}
 	msg := fmt.Sprintf("$%d\r\n%s\r\n", len(val), val)
