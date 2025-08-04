@@ -106,7 +106,7 @@ func SET(k string, v string, con net.Conn, agr ...string) {
 	MEM[k] = v
 	con.Write([]byte("+OK\r\n"))
 
-	if len(agr) >= 8 && strings.ToUpper(agr[8]) == "PX" {
+	if len(agr) > 8 && strings.ToUpper(agr[8]) == "PX" {
 		ms, err := strconv.Atoi(agr[10])
 		if err != nil {
 			fmt.Println("Invalid PX value:", agr[1])
