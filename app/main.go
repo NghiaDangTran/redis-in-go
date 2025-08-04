@@ -21,10 +21,19 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+	fmt.Println("Successed to bind to port 6379")
+	total := 0
+	for {
+
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+		total += 1
+
+		conn.Write([]byte("+PONG\r\n"))
+		conn.Close()
+		fmt.Println("Total connection " + fmt.Sprintf("%d", total))
 	}
-	conn.Write([]byte("+PONG\r\n"))
 }
