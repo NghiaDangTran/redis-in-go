@@ -1,12 +1,10 @@
-[![progress-banner](https://backend.codecrafters.io/progress/redis/5482d08a-cc76-4fcd-be1d-cd429a07a334)]
+# "Build Your Own Redis" Challenge
 
-
-["Build Your Own Redis" Challenge].
+![progress-banner](https://backend.codecrafters.io/progress/redis/5482d08a-cc76-4fcd-be1d-cd429a07a334)
 
 In this challenge, you'll build a toy Redis clone that's capable of handling
 basic commands like `PING`, `SET` and `GET`. Along the way we'll learn about
 event loops, the Redis protocol and more.
-
 
 # Passing the first stage
 

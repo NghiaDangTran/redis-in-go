@@ -13,7 +13,7 @@ var _ = net.Listen
 var _ = os.Exit
 
 // avalaibel around 10000 key
-var MEM = make(map[string]string, 10000)
+var MEM = make(map[string]any, 10000)
 
 func main() {
 	fmt.Println("Logs from your program will appear here!")
@@ -87,6 +87,17 @@ func HandelConnection(con net.Conn) {
 				key := cmd[4]
 				GET(key, con)
 			}
+		case "RPUSH":
+			// sample: "[*3 $5 RPUSH $8 list_key $3 foo ]"
+			if len(cmd) < 6 {
+				con.Write([]byte("-ERR Not enough arguments for RPUSH command \r\n"))
+			} else {
+				key := cmd[4]
+				value := cmd[6]
+				// with expiry ags  "[*5 $3 SET $3 foo $3 bar $2 px $3 100 ]"
+				RPUSH(key, value, con, cmd...)
+
+			}
 
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
@@ -96,13 +107,23 @@ func HandelConnection(con net.Conn) {
 
 }
 
+func RPUSH(k string, v string, con net.Conn, agr ...string) {
+	val, ok := MEM[k]
+
+	if !ok {
+		MEM[k] = []string{v}
+		con.Write([]byte(":1\r\n"))
+		return
+
+	}
+
+	vals := append(val.([]string), v)
+	MEM[k] = vals
+	con.Write([]byte(fmt.Sprintf(":%d\r\n", len(vals))))
+
+}
+
 func SET(k string, v string, con net.Conn, agr ...string) {
-	// key already exist in memory
-	// _, ok := MEM[k]
-	// if ok {
-	// 	con.Write([]byte("-ERR This Key Already Existed\r\n"))
-	// 	return
-	// }
 	MEM[k] = v
 	con.Write([]byte("+OK\r\n"))
 
@@ -121,7 +142,8 @@ func SET(k string, v string, con net.Conn, agr ...string) {
 }
 
 func GET(k string, con net.Conn) {
-	val, ok := MEM[k]
+	// a Type Assertion
+	val, ok := MEM[k].(string)
 	if !ok {
 		con.Write([]byte("$-1\r\n"))
 		return
