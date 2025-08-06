@@ -119,7 +119,7 @@ func RPUSH(k string, v string, con net.Conn, agr ...string) {
 
 	vals := append(val.([]string), v)
 	MEM[k] = vals
-	con.Write([]byte(fmt.Sprintf(":%d\r\n", len(vals))))
+	con.Write([]byte(fmt.Sprintf(":%d\r\n", len(vals)+1)))
 
 }
 
