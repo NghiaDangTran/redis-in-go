@@ -107,6 +107,21 @@ func HandelConnection(con net.Conn) {
 				// User Command: "[*5 $5 RPUSH $12 another_list $3 foo $3 bar $3 baz ]"
 				RPUSH(key, value, con, cmd...)
 			}
+		case "LRANGE":
+			//  User Command: "[*4 $6 LRANGE $8 list_key $1 0 $1 2 ]"
+			// User Command: "[*4 $6 LRANGE $8 list_key $2 -2 $2 -1 ]"
+			if len(cmd) < 8 {
+				con.Write(
+					[]byte("-ERR Not enough arguments for LRANGE command \r\n"),
+				)
+			} else {
+				key := cmd[4]
+				start, _ := strconv.Atoi(cmd[6])
+				end, _ := strconv.Atoi(cmd[8])
+				// with expiry ags  "[*5 $3 SET $3 foo $3 bar $2 px $3 100 ]"\
+				// User Command: "[*5 $5 RPUSH $12 another_list $3 foo $3 bar $3 baz ]"
+				LRANGE(key, start, end, con)
+			}
 
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
@@ -114,6 +129,37 @@ func HandelConnection(con net.Conn) {
 	}
 }
 
+func LRANGE(key string, start int, end int, con net.Conn) {
+	end = end + 1
+	val, ok := MEM[key].([]string)
+	if !ok {
+		fmt.Fprintf(con, "*%d\r\n", 0)
+		return
+
+	}
+	if start > len(val) {
+		fmt.Fprintf(con, "*%d\r\n", 0)
+		return
+
+	}
+	if end > len(val) {
+		end = len(val)
+	}
+
+	if start > end {
+		fmt.Fprintf(con, "*%d\r\n", 0)
+		return
+
+	}
+
+	fmt.Fprintf(con, "*%d\r\n", end)
+
+	for start < end {
+		fmt.Fprintf(con, "$%d\r\n", 1)
+		fmt.Fprintf(con, "%s\r\n", val[start])
+		start += 1
+	}
+}
 func RPUSH(k string, v []string, con net.Conn, agr ...string) {
 
 	toAdd := make([]string, len(v)/2)
