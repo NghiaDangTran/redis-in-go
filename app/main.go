@@ -54,7 +54,7 @@ func HandelConnection(con net.Conn) {
 
 		cmd := strings.Split(string(b[:numBytes]), "\r\n")
 
-		fmt.Printf("User Command: \"%s\" \n", cmd)
+		fmt.Printf("User Command: \"%s\", len(%d) \n", cmd, len(cmd))
 
 		switch strings.ToUpper(cmd[2]) {
 		case "PING":
@@ -135,12 +135,30 @@ func HandelConnection(con net.Conn) {
 				// User Command: "[*5 $5 RPUSH $12 another_list $3 foo $3 bar $3 baz ]"
 				LPUSH(key, value, con)
 			}
+		case "LLEN":
+			if len(cmd) < 6 {
+				con.Write(
+					[]byte("-ERR Not enough arguments for LLEN command \r\n"),
+				)
+			} else {
+				key := cmd[4]
+				LLEN(key, con)
+			}
+
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
 	}
 }
 
+func LLEN(k string, con net.Conn) {
+	val, ok := MEM[k].([]string)
+	if !ok {
+		fmt.Fprintf(con, ":%d\r\n", 0)
+		return
+	}
+	fmt.Fprintf(con, ":%d\r\n", len(val))
+}
 func LPUSH(k string, v []string, con net.Conn) {
 
 	toAdd := make([]string, len(v)/2)
