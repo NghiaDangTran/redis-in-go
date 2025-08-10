@@ -155,7 +155,7 @@ func LRANGE(key string, start int, end int, con net.Conn) {
 	fmt.Fprintf(con, "*%d\r\n", end)
 
 	for start < end {
-		fmt.Fprintf(con, "$%d\r\n", 1)
+		fmt.Fprintf(con, "$%d\r\n", len(val[start]))
 		fmt.Fprintf(con, "%s\r\n", val[start])
 		start += 1
 	}
