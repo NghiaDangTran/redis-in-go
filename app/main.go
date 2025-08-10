@@ -138,10 +138,21 @@ func LRANGE(key string, start int, end int, con net.Conn) {
 		return
 	}
 	if start < 0 {
-		start = len(val) + start
+		if -start > len(val) {
+			start = 0
+		} else {
+			start = len(val) + start
+
+		}
+
 	}
 	if end < 0 {
-		end = len(val) + end
+		if -end > len(val) {
+			end = 0
+		} else {
+			end = len(val) + end
+
+		}
 	}
 
 	end = end + 1
