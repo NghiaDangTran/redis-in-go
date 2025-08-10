@@ -105,7 +105,7 @@ func HandelConnection(con net.Conn) {
 				value := cmd[5 : len(cmd)-1]
 				// with expiry ags  "[*5 $3 SET $3 foo $3 bar $2 px $3 100 ]"\
 				// User Command: "[*5 $5 RPUSH $12 another_list $3 foo $3 bar $3 baz ]"
-				RPUSH(key, value, con, cmd...)
+				RPUSH(key, value, con)
 			}
 		case "LRANGE":
 			//  User Command: "[*4 $6 LRANGE $8 list_key $1 0 $1 2 ]"
@@ -122,11 +122,42 @@ func HandelConnection(con net.Conn) {
 				// User Command: "[*5 $5 RPUSH $12 another_list $3 foo $3 bar $3 baz ]"
 				LRANGE(key, start, end, con)
 			}
-
+		case "LPUSH":
+			// User Command: "[*5 $5 LPUSH $8 list_key $1 a $1 b $1 c ]"
+			if len(cmd) < 6 {
+				con.Write(
+					[]byte("-ERR Not enough arguments for RPUSH command \r\n"),
+				)
+			} else {
+				key := cmd[4]
+				value := cmd[5 : len(cmd)-1]
+				// with expiry ags  "[*5 $3 SET $3 foo $3 bar $2 px $3 100 ]"\
+				// User Command: "[*5 $5 RPUSH $12 another_list $3 foo $3 bar $3 baz ]"
+				LPUSH(key, value, con)
+			}
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
 	}
+}
+
+func LPUSH(k string, v []string, con net.Conn) {
+
+	toAdd := make([]string, len(v)/2)
+	// so this make [ "", "" ,""] len of v/2
+	// so when you append it
+	//  safe make([]string, 0,len(v)/2)
+	toAdd = make([]string, 0, len(v)/2)
+	for i := len(v) - 1; i > 0; i -= 2 {
+		toAdd = append(toAdd, v[i])
+	}
+
+	val, _ := MEM[k].([]string)
+
+	MEM[k] = append(toAdd, val...)
+
+	fmt.Fprintf(con, ":%d\r\n", len(MEM[k].([]string)))
+
 }
 
 func LRANGE(key string, start int, end int, con net.Conn) {
@@ -180,7 +211,7 @@ func LRANGE(key string, start int, end int, con net.Conn) {
 		start += 1
 	}
 }
-func RPUSH(k string, v []string, con net.Conn, agr ...string) {
+func RPUSH(k string, v []string, con net.Conn) {
 
 	toAdd := make([]string, len(v)/2)
 	// so this make [ "", "" ,""] len of v/2
