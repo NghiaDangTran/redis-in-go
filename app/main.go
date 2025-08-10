@@ -144,13 +144,31 @@ func HandelConnection(con net.Conn) {
 				key := cmd[4]
 				LLEN(key, con)
 			}
-
+		case "LPOP":
+			if len(cmd) < 6 {
+				con.Write(
+					[]byte("-ERR Not enough arguments for LPOP command \r\n"),
+				)
+			} else {
+				key := cmd[4]
+				LPOP(key, con)
+			}
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
 	}
 }
 
+func LPOP(k string, con net.Conn) {
+	val, ok := MEM[k].([]string)
+	if !ok {
+		fmt.Fprintf(con, "$%d\r\n", -1)
+		return
+	}
+
+	fmt.Fprintf(con, "$%d\r\n%s\r\n", len(val[0]), val[0])
+	MEM[k] = val[1:]
+}
 func LLEN(k string, con net.Conn) {
 	val, ok := MEM[k].([]string)
 	if !ok {
