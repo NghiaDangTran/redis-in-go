@@ -102,8 +102,9 @@ func HandelConnection(con net.Conn) {
 				)
 			} else {
 				key := cmd[4]
-				value := cmd[6]
-				// with expiry ags  "[*5 $3 SET $3 foo $3 bar $2 px $3 100 ]"
+				value := cmd[5 : len(cmd)-1]
+				// with expiry ags  "[*5 $3 SET $3 foo $3 bar $2 px $3 100 ]"\
+				// User Command: "[*5 $5 RPUSH $12 another_list $3 foo $3 bar $3 baz ]"
 				RPUSH(key, value, con, cmd...)
 			}
 
@@ -113,20 +114,23 @@ func HandelConnection(con net.Conn) {
 	}
 }
 
-func RPUSH(k, v string, con net.Conn, agr ...string) {
-	val, ok := MEM[k]
+func RPUSH(k string, v []string, con net.Conn, agr ...string) {
 
-	if !ok {
-		MEM[k] = []string{v}
-
-		con.Write([]byte(":1\r\n"))
-
-		return
+	toAdd := make([]string, len(v)/2)
+	// so this make [ "", "" ,""] len of v/2
+	// so when you append it
+	//  safe make([]string, 0,len(v)/2)
+	toAdd = make([]string, 0, len(v)/2)
+	for i := 1; i < len(v); i += 2 {
+		toAdd = append(toAdd, v[i])
 	}
 
-	vals := append(val.([]string), v)
-	MEM[k] = vals
-	con.Write([]byte(fmt.Sprintf(":%d\r\n", len(vals))))
+	val, _ := MEM[k].([]string)
+
+	MEM[k] = append(val, toAdd...)
+
+	fmt.Fprintf(con, ":%d\r\n", len(MEM[k].([]string)))
+
 }
 
 func SET(k, v string, con net.Conn, agr ...string) {
