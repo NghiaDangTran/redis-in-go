@@ -136,7 +136,6 @@ func LRANGE(key string, start int, end int, con net.Conn) {
 	if !ok {
 		fmt.Fprintf(con, "*%d\r\n", 0)
 		return
-
 	}
 	if start < 0 {
 		start = len(val) + start
