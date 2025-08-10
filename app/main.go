@@ -130,7 +130,7 @@ func HandelConnection(con net.Conn) {
 }
 
 func LRANGE(key string, start int, end int, con net.Conn) {
-	end = end + 1
+
 	fmt.Println(start, end)
 	val, ok := MEM[key].([]string)
 	if !ok {
@@ -138,6 +138,15 @@ func LRANGE(key string, start int, end int, con net.Conn) {
 		return
 
 	}
+	if start < 0 {
+		start = len(val) + start
+	}
+	if end < 0 {
+		end = len(val) + end
+	}
+
+	end = end + 1
+
 	if start > len(val) {
 		fmt.Fprintf(con, "*%d\r\n", 0)
 		return
