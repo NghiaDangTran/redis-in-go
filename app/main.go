@@ -152,7 +152,7 @@ func HandelConnection(con net.Conn) {
 			} else {
 				key := cmd[4]
 				total := 1
-				if len(cmd) >= 6 {
+				if len(cmd) > 6 {
 					total, _ = strconv.Atoi(cmd[6])
 				}
 				LPOP(key, total, con)
