@@ -193,26 +193,26 @@ func BLPOP(k string, time int, con net.Conn) {
 	hash := utils.TimeHash()
 	CHANS[hash] = make(chan bool)
 	fmt.Printf("Client is waiting with %s\n", hash)
-	for {
 
+	for {
 		select {
 		case <-CHANS[hash]:
 			val, _ := MEM[k].([]string)
-			fmt.Println(len(val))
+			if len(val) == 0 {
+				continue
+			}
 
-			fmt.Fprintf(con, "*%d\r\n", len(val)+1)
-			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(k), k)
-
+			// Pop from the *left*
 			s := val[0]
-			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
-			fmt.Println(val)
 			MEM[k] = val[1:]
 			delete(CHANS, hash)
 
-			// CHAN <- false
+			// RESP: array of 2 bulk strings: key, value
+			fmt.Fprintf(con, "*2\r\n")
+			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(k), k)
+			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
 			return
 		}
-
 	}
 }
 
