@@ -203,10 +203,8 @@ func BLPOP(k string, time int, con net.Conn) {
 			fmt.Fprintf(con, "*%d\r\n", len(val)+1)
 			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(k), k)
 
-			for i := range val {
-				s := val[i]
-				fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
-			}
+			s := val[0]
+			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
 			fmt.Println(val)
 			MEM[k] = val[1:]
 			delete(CHANS, hash)
