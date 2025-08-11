@@ -151,7 +151,11 @@ func HandelConnection(con net.Conn) {
 				)
 			} else {
 				key := cmd[4]
-				LPOP(key, con)
+				total := 1
+				if len(cmd) >= 6 {
+					total, _ = strconv.Atoi(cmd[6])
+				}
+				LPOP(key, total, con)
 			}
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
@@ -159,15 +163,24 @@ func HandelConnection(con net.Conn) {
 	}
 }
 
-func LPOP(k string, con net.Conn) {
+func LPOP(k string, total int, con net.Conn) {
 	val, ok := MEM[k].([]string)
 	if !ok {
 		fmt.Fprintf(con, "$%d\r\n", -1)
 		return
 	}
+	total = min(total, len(val))
+	fmt.Fprintf(con, "*%d\r\n", total)
+	for i := 0; i < total; i++ {
+		s := val[i]
+		fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
+	}
+	if total == len(val)+1 {
+		MEM[k] = []string{}
+	} else {
+		MEM[k] = val[total:]
 
-	fmt.Fprintf(con, "$%d\r\n%s\r\n", len(val[0]), val[0])
-	MEM[k] = val[1:]
+	}
 }
 func LLEN(k string, con net.Conn) {
 	val, ok := MEM[k].([]string)
