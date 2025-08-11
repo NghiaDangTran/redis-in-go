@@ -208,7 +208,7 @@ func BLPOP(k string, time int, con net.Conn) {
 				fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
 			}
 			fmt.Println(val)
-			// MEM[k] = val[1:]
+			MEM[k] = val[1:]
 			delete(CHANS, hash)
 
 			// CHAN <- false
