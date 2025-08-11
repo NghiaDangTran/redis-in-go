@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/codecrafters-io/redis-starter-go/utils"
 )
 
 var (
@@ -16,6 +18,17 @@ var (
 
 // avalaibel around 10000 key.
 var MEM = make(map[string]any, 10000)
+
+// make a map string time hash to sstore all data
+// if BLPOP
+//  call currtime and hash it
+// {timeHash: make chan bool}
+// for {} case <-chans[timeHash]
+
+// if RPUSH
+// for each item in chans
+// call <-true
+var CHANS = map[string]chan bool{}
 
 func main() {
 	fmt.Println("Logs from your program will appear here!")
@@ -157,9 +170,51 @@ func HandelConnection(con net.Conn) {
 				}
 				LPOP(key, total, con)
 			}
+		case "BLPOP":
+			// User Command: "[*3 $5 BLPOP $8 list_key $1 0 ]", len(8)
+
+			if len(cmd) < 6 {
+				con.Write(
+					[]byte("-ERR Not enough arguments for BLOP command \r\n"),
+				)
+			} else {
+				key := cmd[4]
+				total, _ := strconv.Atoi(cmd[6])
+
+				BLPOP(key, total, con)
+			}
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
+	}
+}
+
+func BLPOP(k string, time int, con net.Conn) {
+	hash := utils.TimeHash()
+	CHANS[hash] = make(chan bool)
+	fmt.Printf("Client is waiting with %s\n", hash)
+	for {
+
+		select {
+		case <-CHANS[hash]:
+			val, _ := MEM[k].([]string)
+			fmt.Println(len(val))
+
+			fmt.Fprintf(con, "*%d\r\n", len(val)+1)
+			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(k), k)
+
+			for i := range val {
+				s := val[i]
+				fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
+			}
+			fmt.Println(val)
+			// MEM[k] = val[1:]
+			delete(CHANS, hash)
+
+			// CHAN <- false
+			return
+		}
+
 	}
 }
 
@@ -268,7 +323,6 @@ func LRANGE(key string, start int, end int, con net.Conn) {
 	}
 }
 func RPUSH(k string, v []string, con net.Conn) {
-
 	toAdd := make([]string, len(v)/2)
 	// so this make [ "", "" ,""] len of v/2
 	// so when you append it
@@ -283,6 +337,17 @@ func RPUSH(k string, v []string, con net.Conn) {
 	MEM[k] = append(val, toAdd...)
 
 	fmt.Fprintf(con, ":%d\r\n", len(MEM[k].([]string)))
+
+	if len(CHANS) > 0 {
+		for i := range CHANS {
+			CHANS[i] <- true
+		}
+	}
+	// select {
+	// case :
+	// default:
+
+	// }
 
 }
 
