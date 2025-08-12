@@ -199,7 +199,8 @@ func BLPOP(k string, time int, con net.Conn) {
 		case <-CHANS[hash]:
 			val, _ := MEM[k].([]string)
 			if len(val) == 0 {
-				continue
+				fmt.Fprintf(con, "$%d\r\n", -1)
+				return
 			}
 
 			// Pop from the *left*
