@@ -211,7 +211,7 @@ func BLPOP(k string, waittime time.Duration, con net.Conn) {
 			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(k), k)
 			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
 			return
-		case <-time.After(time.Duration(waittime) * time.Second):
+		case <-time.After(waittime):
 			fmt.Fprintf(con, "$%d\r\n", -1)
 			delete(CHANS, hash)
 			return
