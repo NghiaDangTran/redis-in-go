@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -338,15 +339,17 @@ func RPUSH(k string, v []string, con net.Conn) {
 	fmt.Fprintf(con, ":%d\r\n", len(MEM[k].([]string)))
 
 	if len(CHANS) > 0 {
-		for i := range CHANS {
-			CHANS[i] <- true
-		}
-	}
-	// select {
-	// case :
-	// default:
 
-	// }
+		sortKeys := []string{}
+		for i := range CHANS {
+			sortKeys = append(sortKeys, i)
+		}
+		sort.Strings(sortKeys)
+		for i := range sortKeys {
+			CHANS[sortKeys[i]] <- true
+		}
+
+	}
 
 }
 

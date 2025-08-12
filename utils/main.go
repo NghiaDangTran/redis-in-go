@@ -2,15 +2,14 @@ package utils
 
 import (
 	"fmt"
-	"hash/fnv"
+	"strconv"
 	"time"
 )
 
+const base36Width = 13
+
 func TimeHash() string {
-	now := time.Now().UnixNano()
-	h := fnv.New32a()
-	h.Write([]byte(fmt.Sprint(now)))
-	hashValue := h.Sum32()
-	shortHash := fmt.Sprintf("%x", hashValue)[:7]
-	return shortHash
+	n := time.Now().UTC().UnixNano()
+	s := strconv.FormatInt(n, 36)
+	return fmt.Sprintf("%0*s", base36Width, s)
 }
