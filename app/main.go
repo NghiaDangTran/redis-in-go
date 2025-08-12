@@ -181,8 +181,7 @@ func HandelConnection(con net.Conn) {
 				)
 			} else {
 				key := cmd[4]
-				total, _ := strconv.ParseFloat(cmd[6], 64)
-
+				total, _ := time.ParseDuration(cmd[6] + "s")
 				BLPOP(key, total, con)
 			}
 		default:
@@ -191,7 +190,7 @@ func HandelConnection(con net.Conn) {
 	}
 }
 
-func BLPOP(k string, waittime float64, con net.Conn) {
+func BLPOP(k string, waittime time.Duration, con net.Conn) {
 	hash := utils.TimeHash()
 	CHANS[hash] = make(chan bool)
 	fmt.Printf("Client is waiting with %s\n", hash)
