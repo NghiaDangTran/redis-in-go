@@ -181,14 +181,8 @@ func HandelConnection(con net.Conn) {
 				)
 			} else {
 				key := cmd[4]
-				timeW := "0"
-				if cmd[6] == "0" {
-					timeW = "9999"
-				} else {
-					timeW = cmd[6]
 
-				}
-				total, _ := time.ParseDuration(timeW + "s")
+				total, _ := time.ParseDuration(cmd[6] + "s")
 				BLPOP(key, total, con)
 			}
 		default:
@@ -201,6 +195,13 @@ func BLPOP(k string, waittime time.Duration, con net.Conn) {
 	hash := utils.TimeHash()
 	CHANS[hash] = make(chan bool)
 	fmt.Printf("Client is waiting with %s\n", hash)
+
+	var chanWaitime = make(chan bool)
+
+	if waittime > 0 {
+		<-time.After(waittime)
+		chanWaitime <- true
+	}
 
 	for {
 		select {
@@ -218,7 +219,7 @@ func BLPOP(k string, waittime time.Duration, con net.Conn) {
 			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(k), k)
 			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
 			return
-		case <-time.After(waittime):
+		case <-chanWaitime:
 			fmt.Fprintf(con, "$%d\r\n", -1)
 			delete(CHANS, hash)
 			return
