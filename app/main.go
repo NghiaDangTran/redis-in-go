@@ -184,8 +184,10 @@ func HandelConnection(con net.Conn) {
 				timeW := "0"
 				if cmd[6] == "0" {
 					timeW = "9999"
+				} else {
+					timeW = cmd[6]
+
 				}
-				timeW = cmd[6]
 				total, _ := time.ParseDuration(timeW + "s")
 				BLPOP(key, total, con)
 			}
