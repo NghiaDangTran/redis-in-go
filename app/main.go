@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -200,16 +201,13 @@ func BLPOP(k string, time int, con net.Conn) {
 		case <-CHANS[hash]:
 			val, _ := MEM[k].([]string)
 			if len(val) == 0 {
-				fmt.Fprintf(con, "$%d\r\n", -1)
-				return
+				continue
 			}
 
-			// Pop from the *left*
 			s := val[0]
 			MEM[k] = val[1:]
 			delete(CHANS, hash)
 
-			// RESP: array of 2 bulk strings: key, value
 			fmt.Fprintf(con, "*2\r\n")
 			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(k), k)
 			fmt.Fprintf(con, "$%d\r\n%s\r\n", len(s), s)
@@ -345,6 +343,7 @@ func RPUSH(k string, v []string, con net.Conn) {
 			sortKeys = append(sortKeys, i)
 		}
 		sort.Strings(sortKeys)
+		slices.Reverse(sortKeys)
 		for i := range sortKeys {
 			CHANS[sortKeys[i]] <- true
 		}
