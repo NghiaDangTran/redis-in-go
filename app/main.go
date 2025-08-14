@@ -211,8 +211,10 @@ func BLPOP(k string, waittime time.Duration, con net.Conn) {
 	var chanWaitime = make(chan bool)
 
 	if waittime > 0 {
-		<-time.After(waittime)
-		chanWaitime <- true
+		go func() {
+			<-time.After(waittime)
+			chanWaitime <- true
+		}()
 	}
 
 	for {
