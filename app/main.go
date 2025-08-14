@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/codecrafters-io/redis-starter-go/commands"
 	"github.com/codecrafters-io/redis-starter-go/utils"
 )
 
@@ -185,6 +186,17 @@ func HandelConnection(con net.Conn) {
 				total, _ := time.ParseDuration(cmd[6] + "s")
 				BLPOP(key, total, con)
 			}
+		case "TYPE":
+			// User Command: "[*2 $4 TYPE $8 some_key ]", len(6)
+			if len(cmd) < 6 {
+				con.Write(
+					[]byte("-ERR Not enough arguments for TYPE command \r\n"),
+				)
+			} else {
+				key := cmd[4]
+				commands.TYPE(key, con, MEM)
+			}
+
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
