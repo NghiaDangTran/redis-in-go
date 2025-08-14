@@ -16,8 +16,13 @@ type Value struct {
 	Data     any
 }
 
+type StreamEntry struct {
+	ID     string
+	Fields map[string]string
+}
+
 type RedisServer struct {
-    MEM   map[string]Value
+	MEM   map[string]Value
 	CHANS map[string]chan bool
 	mu    sync.RWMutex
 }
@@ -39,8 +44,8 @@ func CHANS() map[string]chan bool {
 var Server *RedisServer
 
 func InitServer() {
-    Server = &RedisServer{
-        MEM:   make(map[string]Value),
-        CHANS: make(map[string]chan bool),
-    }
+	Server = &RedisServer{
+		MEM:   make(map[string]Value),
+		CHANS: make(map[string]chan bool),
+	}
 }

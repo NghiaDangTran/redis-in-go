@@ -178,5 +178,6 @@ func toStream(vals []string) map[string]string {
 	for i := 0; i < len(vals); i += 2 {
 		out[vals[i]] = vals[i+1]
 	}
+
 	return out
 }

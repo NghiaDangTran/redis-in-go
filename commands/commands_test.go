@@ -193,3 +193,5 @@ func TestBLPopSuccessAfterRPush(t *testing.T) {
 		t.Fatal("BLPOP did not complete after RPUSH")
 	}
 }
+
+// func testXadd(t *testing.T)
