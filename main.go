@@ -46,11 +46,12 @@ func handleConnection(con net.Conn) {
 		}
 
 		parts := strings.Split(string(b[:numBytes]), "\r\n")
-		args := extractBulkStrings(parts) // [CMD, arg1, arg2, ...]
+		args := extractCMD(parts)
 		if len(args) == 0 {
 			con.Write([]byte("-ERR empty command\r\n"))
 			continue
 		}
+		fmt.Println("User Command: ", args, " Len:", len(args))
 
 		switch strings.ToUpper(args[0]) {
 		case "PING":
@@ -83,7 +84,7 @@ func handleConnection(con net.Conn) {
 			}
 			key := args[1]
 			vals := args[2:]
-			commands.RPush(key, toBulkPairs(vals), con)
+			commands.RPush(key, toList(vals), con)
 		case "LPUSH":
 			if len(args) < 3 {
 				con.Write([]byte("-ERR wrong number of arguments for 'LPUSH'\r\n"))
@@ -91,7 +92,7 @@ func handleConnection(con net.Conn) {
 			}
 			key := args[1]
 			vals := args[2:]
-			commands.LPush(key, toBulkPairs(vals), con)
+			commands.LPush(key, toList(vals), con)
 		case "LLEN":
 			if len(args) < 2 {
 				con.Write([]byte("-ERR wrong number of arguments for 'LLEN'\r\n"))
@@ -134,15 +135,23 @@ func handleConnection(con net.Conn) {
 				continue
 			}
 			commands.Type(args[1], con)
+		case "XADD":
+			if len(args) < 2 {
+				con.Write([]byte("-ERR wrong number of arguments for 'XADD'\r\n"))
+				continue
+			}
+			key := args[1]
+			id := args[2]
+			data := toStream(args[3:])
+			commands.Xadd(key, id, data, con)
+
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
 	}
 }
 
-// extractBulkStrings scans CRLF-split lines and collects strings following
-// bulk length markers (e.g., "$3", "SET"). Returns [CMD, arg1, arg2, ...].
-func extractBulkStrings(parts []string) []string {
+func extractCMD(parts []string) []string {
 	vals := make([]string, 0)
 	for i := 0; i+1 < len(parts); i++ {
 		if strings.HasPrefix(parts[i], "$") {
@@ -155,10 +164,19 @@ func extractBulkStrings(parts []string) []string {
 	return vals
 }
 
-func toBulkPairs(vals []string) []string {
+func toList(vals []string) []string {
 	out := make([]string, 0, len(vals)*2)
 	for _, v := range vals {
 		out = append(out, "$"+strconv.Itoa(len(v)), v)
+	}
+	fmt.Println(out)
+	return out
+}
+
+func toStream(vals []string) map[string]string {
+	out := make(map[string]string)
+	for i := 0; i < len(vals); i += 2 {
+		out[vals[i]] = vals[i+1]
 	}
 	return out
 }
