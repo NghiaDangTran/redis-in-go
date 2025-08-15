@@ -16,15 +16,22 @@ type Value struct {
 	Data     any
 }
 
-type StreamEntry struct {
-	ID     string
-	Fields map[string]string
-}
-
 type RedisServer struct {
 	MEM   map[string]Value
 	CHANS map[string]chan bool
 	mu    sync.RWMutex
+}
+
+// stream struct
+// timemap: map a time to sequece help to find the avaiable seq fast
+type StreamData struct {
+	TimeMap    map[int]int
+	StreamList []StreamEntry
+}
+type StreamEntry struct {
+	Time     int
+	Sequence int
+	Fields   map[string]string
 }
 
 func MEM() map[string]Value {
