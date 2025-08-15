@@ -18,10 +18,7 @@ func Xadd(k string, id string, data map[string]string, con net.Conn) {
 	if err != nil {
 		return
 	}
-	if newTime <= 0 && newSeq <= 0 {
-		fmt.Fprintf(con, "-ERR The ID specified in XADD must be greater than 0-0\r\n")
-		return
-	}
+
 	if !ok {
 		mem[k] = srv.Value{
 			DataType: srv.Stream,
@@ -75,7 +72,10 @@ func extractID(id string, v srv.Value, ok bool, con net.Conn) (int, int, error) 
 
 	newTime, _ := strconv.Atoi(parts[0])
 	newSeq, _ := strconv.Atoi(parts[1])
-
+	if newTime <= 0 && newSeq <= 0 {
+		fmt.Fprintf(con, "-ERR The ID specified in XADD must be greater than 0-0\r\n")
+		return 0, 0, fmt.Errorf("xadd id not increasing")
+	}
 	if ok {
 		d := v.Data.(*srv.StreamData)
 		if n := len(d.StreamList); n > 0 {
