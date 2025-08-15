@@ -46,7 +46,7 @@ func extractID(id string, v srv.Value, ok bool, con net.Conn) (int64, int, error
 		if parts[0] == "*" {
 			if ok {
 				// generate current time
-				newTime := time.Now().Unix()
+				newTime := time.Now().UnixMilli()
 				d := v.Data.(*srv.StreamData)
 
 				if _, exist := d.TimeMap[newTime]; !exist {
@@ -58,7 +58,7 @@ func extractID(id string, v srv.Value, ok bool, con net.Conn) (int64, int, error
 				return newTime, d.TimeMap[newTime], nil
 			} else {
 				// generate time and start at zero
-				newTime := time.Now().Unix()
+				newTime := time.Now().UnixMilli()
 				return newTime, 0, nil
 			}
 
