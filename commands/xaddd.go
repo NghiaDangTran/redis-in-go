@@ -53,8 +53,10 @@ func extractID(id string, v srv.Value, ok bool, con net.Conn) (int, int, error) 
 				d := v.Data.(*srv.StreamData)
 				if _, exist := d.TimeMap[newTime]; !exist {
 					d.TimeMap[newTime] = 0
+				} else {
+					d.TimeMap[newTime]++
 				}
-				d.TimeMap[newTime]++
+
 				return newTime, d.TimeMap[newTime], nil
 
 			} else {
