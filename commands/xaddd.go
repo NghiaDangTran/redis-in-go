@@ -5,6 +5,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	srv "github.com/codecrafters-io/redis-starter-go/server"
 )
@@ -23,7 +24,7 @@ func Xadd(k string, id string, data map[string]string, con net.Conn) {
 		mem[k] = srv.Value{
 			DataType: srv.Stream,
 			Data: &srv.StreamData{
-				TimeMap: map[int]int{newTime: newSeq},
+				TimeMap: map[int64]int{newTime: newSeq},
 				StreamList: []srv.StreamEntry{
 					{Time: newTime, Sequence: newSeq, Fields: data},
 				}},
@@ -39,12 +40,31 @@ func Xadd(k string, id string, data map[string]string, con net.Conn) {
 	fmt.Fprintf(con, "$%d\r\n%s\r\n", len(strLen), strLen)
 
 }
-func extractID(id string, v srv.Value, ok bool, con net.Conn) (int, int, error) {
+func extractID(id string, v srv.Value, ok bool, con net.Conn) (int64, int, error) {
 	if strings.Contains(id, "*") {
 		parts := strings.SplitN(id, "-", 2)
+		if parts[0] == "*" {
+			if ok {
+				// generate current time
+				newTime := time.Now().Unix()
+				d := v.Data.(*srv.StreamData)
 
+				if _, exist := d.TimeMap[newTime]; !exist {
+					d.TimeMap[newTime] = 0
+				} else {
+					d.TimeMap[newTime]++
+				}
+
+				return newTime, d.TimeMap[newTime], nil
+			} else {
+				// generate time and start at zero
+				newTime := time.Now().Unix()
+				return newTime, 0, nil
+			}
+
+		}
 		if parts[1] == "*" {
-			newTime, _ := strconv.Atoi(parts[0])
+			newTime, _ := strconv.ParseInt(parts[0], 10, 64)
 
 			if ok {
 				d := v.Data.(*srv.StreamData)
@@ -70,7 +90,7 @@ func extractID(id string, v srv.Value, ok bool, con net.Conn) (int, int, error) 
 
 	parts := strings.SplitN(id, "-", 2)
 
-	newTime, _ := strconv.Atoi(parts[0])
+	newTime, _ := strconv.ParseInt(parts[0], 10, 64)
 	newSeq, _ := strconv.Atoi(parts[1])
 	if newTime <= 0 && newSeq <= 0 {
 		fmt.Fprintf(con, "-ERR The ID specified in XADD must be greater than 0-0\r\n")

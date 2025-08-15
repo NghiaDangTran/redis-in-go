@@ -25,11 +25,11 @@ type RedisServer struct {
 // stream struct
 // timemap: map a time to sequece help to find the avaiable seq fast
 type StreamData struct {
-	TimeMap    map[int]int
+	TimeMap    map[int64]int
 	StreamList []StreamEntry
 }
 type StreamEntry struct {
-	Time     int
+	Time     int64
 	Sequence int
 	Fields   map[string]string
 }
