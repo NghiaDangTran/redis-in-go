@@ -1,11 +1,10 @@
 package commands
 
 import (
-    "fmt"
-    "net"
+	"fmt"
+	"net"
 )
 
 func Ping(con net.Conn) {
-    fmt.Fprint(con, "+PONG\r\n")
+	fmt.Fprint(con, "+PONG\r\n")
 }
-

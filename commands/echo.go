@@ -1,11 +1,10 @@
 package commands
 
 import (
-    "fmt"
-    "net"
+	"fmt"
+	"net"
 )
 
 func Echo(msg string, con net.Conn) {
-    fmt.Fprintf(con, "+%s\r\n", msg)
+	fmt.Fprintf(con, "+%s\r\n", msg)
 }
-
