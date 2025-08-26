@@ -53,6 +53,7 @@ func Xread(pairs [][]any, con net.Conn) {
 		}
 		fmt.Fprintf(con, "*2\r\n")
 		fmt.Fprintf(con, "$%d\r\n%s\r\n", len(key), key)
+		fmt.Fprintf(con, "*1\r\n")
 		fmt.Fprintf(con, "*2\r\n")
 		res := sl[startIdx]
 
