@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -167,6 +168,25 @@ func handleConnection(con net.Conn) {
 			}
 
 			commands.Xrange(key, start, startSeq, end, endSeq, con)
+		case "XREAD":
+			// XREAD [BLOCK milliseconds] STREAMS key [key ...] id [id ...]
+			// User Command:  [XREAD streams some_key 1526985054069-0]  Len: 4
+
+			idx := slices.Index(args, "streams")
+
+			start := idx + 1
+			rem := len(args) - start
+
+			mid := start + rem/2
+			keys := args[start:mid]
+			ids := args[mid:]
+
+			pairs := make([][]any, 0, len(keys))
+			for i := range keys {
+				time, seq := toTimeSeq(ids[i])
+				pairs = append(pairs, []any{keys[i], time, seq})
+			}
+			commands.Xread(pairs, con)
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
