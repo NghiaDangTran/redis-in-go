@@ -12,6 +12,9 @@ import (
 	srv "github.com/codecrafters-io/redis-starter-go/server"
 )
 
+// + inf
+const SeqInfinity int64 = 1<<63 - 1
+
 func main() {
 	fmt.Println("Starting Redis server...")
 	srv.InitServer()
@@ -155,9 +158,14 @@ func handleConnection(con net.Conn) {
 			start, startSeq := toTimeSeq(args[2])
 			end, endSeq := toTimeSeq(args[3])
 
-			// startTime,startSeq, -1  endTime,endSequence -1
-			// if startSeq == -1 it mean do all in the range
-			//
+			if args[3] == "+" {
+				end, endSeq = SeqInfinity, SeqInfinity
+
+			}
+			if args[2] == "-" {
+				start, startSeq = 0, 0
+			}
+
 			commands.Xrange(key, start, startSeq, end, endSeq, con)
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
