@@ -144,7 +144,21 @@ func handleConnection(con net.Conn) {
 			id := args[2]
 			data := toStream(args[3:])
 			commands.Xadd(key, id, data, con)
+		case "XRANGE":
+			// User Command:  [XRANGE some_key 1526985054069 1526985054079]  Len: 4
 
+			if len(args) < 3 {
+				con.Write([]byte("-ERR wrong number of arguments for 'XRANGE'\r\n"))
+				continue
+			}
+			key := args[1]
+			start, startSeq := toTimeSeq(args[2])
+			end, endSeq := toTimeSeq(args[3])
+
+			// startTime,startSeq, -1  endTime,endSequence -1
+			// if startSeq == -1 it mean do all in the range
+			//
+			commands.Xrange(key, start, startSeq, end, endSeq, con)
 		default:
 			con.Write([]byte("-ERR unknown command\r\n"))
 		}
@@ -173,11 +187,22 @@ func toList(vals []string) []string {
 	return out
 }
 
-func toStream(vals []string) map[string]string {
-	out := make(map[string]string)
+func toStream(vals []string) []srv.Field {
+	out := []srv.Field{}
 	for i := 0; i < len(vals); i += 2 {
-		out[vals[i]] = vals[i+1]
+		out = append(out, srv.Field{Key: vals[i], Value: vals[i+1]})
 	}
 
 	return out
+}
+
+func toTimeSeq(s string) (int64, int64) {
+	var seq int64
+	seq = 0
+	parts := strings.Split(s, "-")
+	val, _ := strconv.ParseInt(parts[0], 10, 64)
+	if len(parts) == 2 && parts[1] != "" {
+		seq, _ = strconv.ParseInt(parts[1], 10, 64)
+	}
+	return val, seq
 }

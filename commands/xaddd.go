@@ -10,7 +10,7 @@ import (
 	srv "github.com/codecrafters-io/redis-starter-go/server"
 )
 
-func Xadd(k string, id string, data map[string]string, con net.Conn) {
+func Xadd(k string, id string, data []srv.Field, con net.Conn) {
 
 	mem := srv.MEM()
 	v, ok := mem[k]
@@ -26,14 +26,18 @@ func Xadd(k string, id string, data map[string]string, con net.Conn) {
 			Data: &srv.StreamData{
 				TimeMap: map[int64]int{newTime: newSeq},
 				StreamList: []srv.StreamEntry{
-					{Time: newTime, Sequence: newSeq, Fields: data},
-				}},
+					{
+						Time:     newTime,
+						Sequence: newSeq,
+						Fields:   data,
+					},
+				},
+			},
 		}
 
 	} else {
 		sd := v.Data.(*srv.StreamData)
 		sd.StreamList = append(sd.StreamList, srv.StreamEntry{Time: newTime, Sequence: newSeq, Fields: data})
-
 		mem[k] = v
 	}
 	strLen := fmt.Sprintf("%d-%d", newTime, newSeq)

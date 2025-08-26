@@ -28,10 +28,11 @@ type StreamData struct {
 	TimeMap    map[int64]int
 	StreamList []StreamEntry
 }
+type Field struct{ Key, Value string }
 type StreamEntry struct {
 	Time     int64
 	Sequence int
-	Fields   map[string]string
+	Fields   []Field
 }
 
 func MEM() map[string]Value {

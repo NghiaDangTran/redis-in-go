@@ -1,0 +1,4 @@
+redis-cli XADD stream_key 0-1 foo bar
+redis-cli XADD stream_key 0-2 bar baz
+redis-cli XADD stream_key 0-3 baz foo
+ redis-cli XRANGE stream_key 0-2 0-3
